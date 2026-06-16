@@ -1,0 +1,24 @@
+# deps
+/node_modules
+/.pnp
+.pnp.js
+
+# next.js
+/.next/
+/out/
+
+# local data & secrets
+/data/
+.env
+.env.local
+.env.*.local
+
+# build
+next-env.d.ts
+*.tsbuildinfo
+
+# OS
+.DS_Store
+
+# misc
+*.log
