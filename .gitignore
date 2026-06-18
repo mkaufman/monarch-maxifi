@@ -22,3 +22,6 @@ next-env.d.ts
 
 # misc
 *.log
+
+# local notes (not for version control)
+/notes/

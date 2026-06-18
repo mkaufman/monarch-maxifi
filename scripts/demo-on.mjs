@@ -31,8 +31,8 @@ const BACKUP_PATH = path.join(ROOT, 'data', 'demo-backup.json');
 const BASE_URL = 'http://localhost:3000';
 const year = parseInt(process.argv[2] ?? String(new Date().getFullYear()), 10);
 
-const FAKE_PERSON1 = 'Alex';
-const FAKE_PERSON2 = 'Jordan';
+const FAKE_PERSON1 = 'David';
+const FAKE_PERSON2 = 'Karen';
 
 // Generic names for special expenses — cycles if there are more than this many
 const GENERIC_EXPENSE_NAMES = [
@@ -136,30 +136,12 @@ for (const bucket of ['fixed', 'discretionary']) {
   fakeMonarch.buckets[bucket].ytdTotal = cats.reduce((s, c) => s + c.ytdTotal, 0);
   fakeMonarch.buckets[bucket].annualForecast = cats.reduce((s, c) => s + c.annualForecast, 0);
 
-  // Scale bucket budget with a small independent wobble (different from
-  // categories so variance isn't identical to real).
-  if (fakeMonarch.buckets[bucket].budget !== null) {
-    fakeMonarch.buckets[bucket].budget = roundBudget(
-      fakeMonarch.buckets[bucket].budget * GLOBAL_SCALE * jitter(0.05)
-    );
-  }
+  // Budget is scaled once below (in fakeBudgets) and copied in — not scaled here.
 }
-
-// Scale subcategory breakdown (Fixed bucket detail)
-for (const item of fakeMonarch.fixedSubcategoryBreakdown ?? []) {
-  item.forecast = Math.round(item.forecast * GLOBAL_SCALE * jitter(0.14));
-  if (item.budget !== null) {
-    item.budget = roundBudget(item.budget * GLOBAL_SCALE * jitter(0.08));
-  }
-  // Replace real names in labels (e.g. "Jane's Retirement" → "Alex's Retirement")
-  item.label = item.label.replace(new RegExp(`\\b${realPerson1}\\b`, 'g'), FAKE_PERSON1)
-                          .replace(new RegExp(`\\b${realPerson2}\\b`, 'g'), FAKE_PERSON2);
-}
-
-fs.writeFileSync(MONARCH_FIXTURE, JSON.stringify(fakeMonarch, null, 2));
-console.log('Monarch fixture written to data/demo-monarch.json');
 
 // --- Scale /api/budgets response ------------------------------------------
+// Budgets are scaled here first, then the same values are copied into the
+// monarch fixture so both screens always show identical budget numbers.
 
 const fakeBudgets = JSON.parse(JSON.stringify(budgetsData));
 
@@ -170,6 +152,48 @@ for (const b of fakeBudgets.buckets ?? []) {
 for (const s of fakeBudgets.subcategories ?? []) {
   s.amount = roundBudget(s.amount * GLOBAL_SCALE * jitter(0.10));
 }
+
+// Copy scaled bucket budgets into monarch fixture
+const scaledBucketBudget = Object.fromEntries(
+  (fakeBudgets.buckets ?? []).map((b) => [b.bucket, b.amount])
+);
+for (const bucket of ['fixed', 'discretionary']) {
+  if (fakeMonarch.buckets[bucket].budget !== null && scaledBucketBudget[bucket] !== undefined) {
+    fakeMonarch.buckets[bucket].budget = scaledBucketBudget[bucket];
+  }
+}
+
+// Recompute fixedSubcategoryBreakdown forecasts by summing the already-scaled
+// category forecasts — same logic as the real route, so totals always match.
+const scaledSubcatBudget = Object.fromEntries(
+  (fakeBudgets.subcategories ?? []).map((s) => [s.subcategory, s.amount])
+);
+const forecastBySubcat = {};
+let unallocatedForecast = 0;
+for (const cat of fakeMonarch.buckets.fixed.categories) {
+  const subcat = cat.config?.maxifi_subcategory;
+  if (subcat) {
+    forecastBySubcat[subcat] = (forecastBySubcat[subcat] ?? 0) + cat.annualForecast;
+  } else {
+    unallocatedForecast += cat.annualForecast;
+  }
+}
+for (const item of fakeMonarch.fixedSubcategoryBreakdown ?? []) {
+  if (item.key === 'unallocated') {
+    item.forecast = unallocatedForecast;
+  } else {
+    item.forecast = forecastBySubcat[item.key] ?? item.forecast;
+  }
+  if (item.budget !== null && scaledSubcatBudget[item.key] !== undefined) {
+    item.budget = scaledSubcatBudget[item.key];
+  }
+  // Replace real names in labels (e.g. "Jane's Retirement" → "David's Retirement")
+  item.label = item.label.replace(new RegExp(`\\b${realPerson1}\\b`, 'g'), FAKE_PERSON1)
+                          .replace(new RegExp(`\\b${realPerson2}\\b`, 'g'), FAKE_PERSON2);
+}
+
+fs.writeFileSync(MONARCH_FIXTURE, JSON.stringify(fakeMonarch, null, 2));
+console.log('Monarch fixture written to data/demo-monarch.json');
 
 // Replace special expense names and scale amounts
 let nameIdx = 0;
