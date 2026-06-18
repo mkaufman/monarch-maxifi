@@ -14,13 +14,13 @@ import path from 'path';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  const demoFixture = path.join(process.cwd(), 'data', 'demo-budgets.json');
+  const { searchParams } = request.nextUrl;
+  const year = parseInt(searchParams.get('year') ?? String(new Date().getFullYear()), 10);
+
+  const demoFixture = path.join(process.cwd(), 'data', `demo-budgets-${year}.json`);
   if (fs.existsSync(demoFixture)) {
     return NextResponse.json(JSON.parse(fs.readFileSync(demoFixture, 'utf-8')));
   }
-
-  const { searchParams } = request.nextUrl;
-  const year = parseInt(searchParams.get('year') ?? String(new Date().getFullYear()), 10);
 
   const [buckets, subcategories, specialExpenses] = await Promise.all([
     Promise.resolve(getMaxiFiBudgets(year)),

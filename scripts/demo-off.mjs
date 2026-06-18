@@ -18,20 +18,18 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
 const DB_PATH = path.join(ROOT, 'data', 'monarch-maxifi.db');
-const MONARCH_FIXTURE = path.join(ROOT, 'data', 'demo-monarch.json');
-const BUDGETS_FIXTURE = path.join(ROOT, 'data', 'demo-budgets.json');
+const DATA_DIR = path.join(ROOT, 'data');
 const BACKUP_PATH = path.join(ROOT, 'data', 'demo-backup.json');
 
-// Remove fixture files
-let removed = 0;
-for (const f of [MONARCH_FIXTURE, BUDGETS_FIXTURE]) {
-  if (fs.existsSync(f)) {
-    fs.unlinkSync(f);
-    removed++;
-    console.log(`Removed ${path.basename(f)}`);
-  }
+// Remove all year-specific demo fixture files
+const fixtures = fs.readdirSync(DATA_DIR).filter(
+  (f) => f.startsWith('demo-monarch-') || f.startsWith('demo-budgets-')
+);
+for (const f of fixtures) {
+  fs.unlinkSync(path.join(DATA_DIR, f));
+  console.log(`Removed ${f}`);
 }
-if (removed === 0) {
+if (fixtures.length === 0) {
   console.log('No demo fixtures found — demo mode was not active.');
 }
 

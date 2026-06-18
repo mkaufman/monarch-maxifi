@@ -9,12 +9,13 @@ import path from 'path';
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
-  const demoFixture = path.join(process.cwd(), 'data', 'demo-monarch.json');
+  const { searchParams } = request.nextUrl;
+  const year = parseInt(searchParams.get('year') ?? String(new Date().getFullYear()), 10);
+
+  const demoFixture = path.join(process.cwd(), 'data', `demo-monarch-${year}.json`);
   if (fs.existsSync(demoFixture)) {
     return NextResponse.json(JSON.parse(fs.readFileSync(demoFixture, 'utf-8')));
   }
-  const { searchParams } = request.nextUrl;
-  const year = parseInt(searchParams.get('year') ?? String(new Date().getFullYear()), 10);
 
   const today = new Date();
   const startOfYear = `${year}-01-01`;
