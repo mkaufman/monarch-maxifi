@@ -311,7 +311,10 @@ export default function SettingsForm() {
         <div className="bg-surface rounded-xl border border-border p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-navy">Special Expenses</h3>
+              <h3 className="font-semibold text-navy flex items-center">
+                Special Expenses
+                <Tooltip content="Find these in MaxiFi under Base Plan Profile → Household → Special Expenses." />
+              </h3>
               <p className="text-xs text-text-secondary mt-0.5">Planned costs from your MaxiFi profile (car purchase, home project, medical). Included in your Fixed MaxiFi budget — actuals tracked per category in the report.</p>
             </div>
             <button
