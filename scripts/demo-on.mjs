@@ -27,6 +27,11 @@ const ROOT = path.join(__dirname, '..');
 const DB_PATH = path.join(ROOT, 'data', 'monarch-maxifi.db');
 const BACKUP_PATH = path.join(ROOT, 'data', 'demo-backup.json');
 
+if (fs.existsSync(BACKUP_PATH)) {
+  console.error('\n✗ Demo mode is already active. Run npm run demo:off first.\n');
+  process.exit(1);
+}
+
 const BASE_URL = 'http://localhost:3000';
 const year = parseInt(process.argv[2] ?? String(new Date().getFullYear()), 10);
 const priorYear = year - 1;
@@ -76,6 +81,8 @@ const realPerson1 = members.find((m) => m.member_key === 'person1')?.name ?? 'Pe
 const realPerson2 = members.find((m) => m.member_key === 'person2')?.name ?? 'Person 2';
 
 // --- Per-year fixture generator -------------------------------------------
+
+let fixturesWritten = 0;
 
 async function buildFixtures(targetYear) {
   console.log(`\nFetching year=${targetYear} data from ${BASE_URL}...`);
@@ -177,7 +184,7 @@ async function buildFixtures(targetYear) {
     if (item.key === 'unallocated') {
       item.forecast = unallocatedForecast;
     } else {
-      item.forecast = forecastBySubcat[item.key] ?? item.forecast;
+      item.forecast = forecastBySubcat[item.key] ?? 0;
     }
     if (item.budget !== null && scaledSubcatBudget[item.key] !== undefined) {
       item.budget = scaledSubcatBudget[item.key];
@@ -205,12 +212,20 @@ async function buildFixtures(targetYear) {
 
   fs.writeFileSync(budgetsFixture, JSON.stringify(fakeBudgets, null, 2));
   console.log(`  Budgets fixture → data/demo-budgets-${targetYear}.json`);
+
+  fixturesWritten++;
 }
 
 // --- Generate fixtures for current year and prior year --------------------
 
 await buildFixtures(year);
 await buildFixtures(priorYear);
+
+if (fixturesWritten === 0) {
+  fs.unlinkSync(BACKUP_PATH);
+  console.error('\n✗ No fixtures written — demo mode not activated. Backup removed.\n');
+  process.exit(1);
+}
 
 // --- Update names in SQLite -----------------------------------------------
 

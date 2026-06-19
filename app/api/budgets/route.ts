@@ -8,19 +8,17 @@ import {
   upsertSpecialExpense,
   deleteSpecialExpense,
 } from '@/lib/db';
-import fs from 'fs';
-import path from 'path';
+import { tryDemoFixture } from '@/lib/demo';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const year = parseInt(searchParams.get('year') ?? String(new Date().getFullYear()), 10);
+  if (isNaN(year)) return NextResponse.json({ error: 'Invalid year parameter' }, { status: 400 });
 
-  const demoFixture = path.join(process.cwd(), 'data', `demo-budgets-${year}.json`);
-  if (fs.existsSync(demoFixture)) {
-    return NextResponse.json(JSON.parse(fs.readFileSync(demoFixture, 'utf-8')));
-  }
+  const demo = tryDemoFixture('budgets', year);
+  if (demo) return demo;
 
   const [buckets, subcategories, specialExpenses] = await Promise.all([
     Promise.resolve(getMaxiFiBudgets(year)),

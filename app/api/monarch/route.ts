@@ -3,19 +3,17 @@ import { fetchMonarchData } from '@/lib/monarch';
 import { getAllCategoryConfigs, upsertCategoryConfig, deleteCategoryConfig, getMaxiFiBudgets, getMaxiFiSubcategories, getHouseholdMembers } from '@/lib/db';
 import { DEFAULT_CATEGORY_CONFIG, defaultModelFromVariability } from '@/lib/categories';
 import { computeForecast, computeFlags, MODEL_LABELS } from '@/lib/forecast';
-import fs from 'fs';
-import path from 'path';
+import { tryDemoFixture } from '@/lib/demo';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
   const year = parseInt(searchParams.get('year') ?? String(new Date().getFullYear()), 10);
+  if (isNaN(year)) return NextResponse.json({ error: 'Invalid year parameter' }, { status: 400 });
 
-  const demoFixture = path.join(process.cwd(), 'data', `demo-monarch-${year}.json`);
-  if (fs.existsSync(demoFixture)) {
-    return NextResponse.json(JSON.parse(fs.readFileSync(demoFixture, 'utf-8')));
-  }
+  const demo = tryDemoFixture('monarch', year);
+  if (demo) return demo;
 
   const today = new Date();
   const startOfYear = `${year}-01-01`;

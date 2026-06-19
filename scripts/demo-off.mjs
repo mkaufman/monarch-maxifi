@@ -22,9 +22,11 @@ const DATA_DIR = path.join(ROOT, 'data');
 const BACKUP_PATH = path.join(ROOT, 'data', 'demo-backup.json');
 
 // Remove all year-specific demo fixture files
-const fixtures = fs.readdirSync(DATA_DIR).filter(
-  (f) => f.startsWith('demo-monarch-') || f.startsWith('demo-budgets-')
-);
+const fixtures = fs.existsSync(DATA_DIR)
+  ? fs.readdirSync(DATA_DIR).filter(
+      (f) => (f.startsWith('demo-monarch-') || f.startsWith('demo-budgets-')) && f.endsWith('.json')
+    )
+  : [];
 for (const f of fixtures) {
   fs.unlinkSync(path.join(DATA_DIR, f));
   console.log(`Removed ${f}`);
