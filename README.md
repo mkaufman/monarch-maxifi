@@ -96,12 +96,12 @@ If you're a single-person household, fill in Person 1 and leave Person 2 blank.
 
 ### MaxiFi Budget Values
 
-Open your most recent MaxiFi plan report and find the annual discretionary and fixed plan totals for this year. Enter them in the **MaxiFi Budgets** section:
+Find both values in MaxiFi under **Reports → Base Plan Dashboard → Discretionary Spending Plan**. Enter them in the **MaxiFi Budgets** section:
 
 - **Discretionary Total** — your MaxiFi annual discretionary spending budget
 - **Fixed Total** — your MaxiFi annual fixed spending budget
 
-In the **Fixed Subcategories** section, enter the breakdown of your fixed budget. Most values come directly from the **Spending Overview** page of your MaxiFi plan report — each field corresponds to a column in that table:
+In the **Fixed Subcategories** section, enter the breakdown of your fixed budget. Most values come from **Reports → Base Plan Report → Spending → Spending Overview** in MaxiFi — each field corresponds to a column in that table:
 
 | Field | Where to find it in MaxiFi |
 |---|---|
@@ -111,7 +111,7 @@ In the **Fixed Subcategories** section, enter the breakdown of your fixed budget
 | Person 1's Retirement Contributions | Spending Overview — **Person 1's Retirement Contributions** column |
 | Person 2's Retirement Contributions | Spending Overview — **Person 2's Retirement Contributions** column |
 | Taxes | Spending Overview — **Taxes** column |
-| HSA Contributions | Health savings account section of your plan |
+| HSA Contributions | **Reports → Base Plan Report → Saving → Health Savings Account Saving Plan** |
 
 If MaxiFi doesn't include a particular line item in your plan, leave that field as zero.
 
@@ -119,7 +119,7 @@ Once entered, these subcategory amounts appear in the **Fixed Spending card** on
 
 ### Special Expenses
 
-If your MaxiFi plan includes special expenses for the year (a car purchase, a home project, a medical procedure), add them in the **Special Expenses** section. You can find these values under **Household → Special Expenses** in the MaxiFi plan. These are included in your Fixed budget total for comparison purposes.
+If your MaxiFi plan includes special expenses for the year (a car purchase, a home project, a medical procedure), add them in the **Special Expenses** section. You can find these values in MaxiFi under **Base Plan Profile → Household → Special Expenses**. These are included in your Fixed budget total for comparison purposes.
 
 ### Category Configuration
 
