@@ -290,7 +290,10 @@ export default function SettingsForm() {
 
         {/* Fixed subcategories */}
         <div className="bg-surface rounded-xl border border-border p-6 space-y-4">
-          <h3 className="font-semibold text-navy">Fixed Subcategories</h3>
+          <h3 className="font-semibold text-navy flex items-center">
+            Fixed Subcategories
+            <Tooltip content="Most values come from Base Plan Report → Spending → Spending Overview in MaxiFi." />
+          </h3>
           <div className="grid grid-cols-2 gap-4">
             {Object.entries(subcatLabels).map(([key, label]) => (
               <DollarInput
@@ -298,6 +301,7 @@ export default function SettingsForm() {
                 label={label}
                 value={getSubcatAmount(key)}
                 onChange={(v) => setSubcatAmount(key, v)}
+                tooltip={key === 'hsa_contributions' ? 'Find this under Base Plan Report → Saving → Health Savings Account Saving Plan in MaxiFi.' : undefined}
               />
             ))}
           </div>
@@ -413,10 +417,13 @@ function Tooltip({ content, wide }: { content: React.ReactNode; wide?: boolean }
   );
 }
 
-function DollarInput({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+function DollarInput({ label, value, onChange, tooltip }: { label: string; value: number; onChange: (v: number) => void; tooltip?: string }) {
   return (
     <div className="space-y-1">
-      <label className="text-sm text-text-secondary">{label}</label>
+      <label className="text-sm text-text-secondary flex items-center">
+        {label}
+        {tooltip && <Tooltip content={tooltip} />}
+      </label>
       <div className="relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary text-sm">$</span>
         <input
