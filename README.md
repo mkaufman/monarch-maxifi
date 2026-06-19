@@ -138,7 +138,7 @@ The app pre-fills sensible defaults for common categories. Review and adjust as 
 | **Run Rate** | Annualizes your YTD pace (YTD ÷ days elapsed × 365) | Most variable expenses |
 | **Monthly** | Your entered monthly amount × 12 | Fixed recurring bills with a known monthly cost |
 | **Annual** | A specific annual amount you enter | Expenses with a known full-year total |
-| **Adjusted Run Rate** | Run rate after subtracting a one-time amount and/or adding a known future amount | Categories with a large non-recurring transaction skewing the pace |
+| **Adjusted Run Rate** | Run rate after optionally subtracting a one-time amount and/or adding a known amount. The "add" field has two uses: (1) re-include a lump-sum you've subtracted — the transaction has already posted but you don't want it skewing the run rate; (2) account for a known expense not yet in your YTD — remove it manually once the transaction posts | Categories with a large non-recurring transaction skewing the pace |
 | **No Further Spend** | Uses your YTD actual as the full-year forecast | Expenses you know are done for the year |
 
 ---

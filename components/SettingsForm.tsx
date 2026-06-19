@@ -502,7 +502,7 @@ function CategoryConfigTable({
                     <ul className="space-y-1.5">
                       <li><span className="font-semibold">Monthly</span> — your expected monthly amount</li>
                       <li><span className="font-semibold">Annual</span> — the full-year total</li>
-                      <li><span className="font-semibold">Adjusted Run Rate</span> — subtract a one-time item and/or add known future spend before extrapolating</li>
+                      <li><span className="font-semibold">Adjusted Run Rate</span> — subtract a one-time item before extrapolating, and/or add a known amount back in (hover the + field for details)</li>
                     </ul>
                   } />
                 </th>
@@ -569,16 +569,18 @@ function CategoryConfigTable({
                           className="w-32 border border-border rounded px-2 py-1 text-xs text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-blue/30"
                           title="Subtract this one-time amount from YTD spend before extrapolating"
                         />
-                        <input
-                          type="number"
-                          value={c.forecast_add_amount ?? ''}
-                          placeholder="Add future $"
-                          onChange={(e) =>
-                            onUpdate(c.category_id, { forecast_add_amount: parseFloat(e.target.value) || null })
-                          }
-                          className="w-24 border border-border rounded px-2 py-1 text-xs text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-blue/30"
-                          title="Add this known future spend to the extrapolated amount"
-                        />
+                        <div className="flex items-center gap-0.5">
+                          <input
+                            type="number"
+                            value={c.forecast_add_amount ?? ''}
+                            placeholder="Add future $"
+                            onChange={(e) =>
+                              onUpdate(c.category_id, { forecast_add_amount: parseFloat(e.target.value) || null })
+                            }
+                            className="w-24 border border-border rounded px-2 py-1 text-xs text-right tabular-nums focus:outline-none focus:ring-1 focus:ring-blue/30"
+                          />
+                          <Tooltip wide content="Add a known amount to the extrapolated total. Two common uses: (1) to re-include a lump-sum you've already subtracted — the transaction has posted, but you don't want it skewing the run rate; (2) to account for a large expense not yet in your YTD — remove it manually once the transaction posts." />
+                        </div>
                       </div>
                     )}
                   </td>
