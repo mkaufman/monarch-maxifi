@@ -270,7 +270,10 @@ export default function SettingsForm() {
 
         {/* Top-level buckets */}
         <div className="bg-surface rounded-xl border border-border p-6 space-y-4">
-          <h3 className="font-semibold text-navy">Top-Level Totals</h3>
+          <h3 className="font-semibold text-navy flex items-center">
+            Top-Level Totals
+            <Tooltip content="Find both values in MaxiFi under Reports → Base Plan Dashboard → Discretionary Spending Plan." />
+          </h3>
           <div className="grid grid-cols-2 gap-4">
             <DollarInput
               label="Discretionary Total"
