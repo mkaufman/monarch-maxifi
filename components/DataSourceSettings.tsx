@@ -75,9 +75,9 @@ export default function DataSourceSettings() {
       <h2 className="text-xl font-semibold text-navy">Data Source</h2>
       <div className="bg-surface rounded-xl border border-border p-6 space-y-4">
         <p className="text-sm text-text-secondary">
-          Choose where actuals come from. Monarch syncs live; CSV upload runs the same forecasts from a
-          Monarch transaction export — useful when the live connection is unavailable. Category settings
-          are kept separately per source.
+          Choose where actuals come from. Each source is independent, with its own category settings.
+          Monarch and YNAB sync live; a Transaction CSV is a point-in-time upload — re-upload to refresh —
+          that needs no live connection, so it works even during a Monarch outage.
         </p>
 
         <div className="flex flex-wrap gap-3">
@@ -85,13 +85,15 @@ export default function DataSourceSettings() {
             const isActive = active === p.id;
             const needsCsv = p.id === 'csv' && !status?.csvUploaded;
             const needsYnab = p.id === 'ynab' && !status?.ynabConnected;
-            const disabled = busy || needsCsv || needsYnab;
+            // CSV activates on upload, so its button opens the file picker rather
+            // than being a dead greyed control when no file exists yet.
+            const disabled = busy || needsYnab;
             return (
               <button
                 key={p.id}
                 type="button"
                 disabled={disabled}
-                onClick={() => switchTo(p.id)}
+                onClick={() => (needsCsv ? fileInput.current?.click() : switchTo(p.id))}
                 className={`rounded-lg border px-4 py-2 text-sm ${
                   isActive
                     ? 'border-blue bg-blue/10 text-blue font-medium'
@@ -106,7 +108,7 @@ export default function DataSourceSettings() {
 
         <div className="space-y-1 pt-1">
           <label className="text-sm text-text-secondary">
-            {status?.csvUploaded ? 'Replace CSV export' : 'Upload Monarch CSV export'}
+            {status?.csvUploaded ? 'Replace CSV file' : 'Upload a transaction CSV'}
           </label>
           <input
             ref={fileInput}
@@ -119,6 +121,9 @@ export default function DataSourceSettings() {
             }}
             className="block w-full text-sm text-text-secondary file:mr-4 file:rounded-lg file:border-0 file:bg-blue/10 file:px-4 file:py-2 file:text-sm file:text-blue hover:file:bg-blue/20"
           />
+          <p className="text-xs text-text-secondary">
+            Monarch export format. Choosing a file makes CSV your active data source; re-upload anytime to refresh.
+          </p>
         </div>
 
         <div className="space-y-1 pt-1">

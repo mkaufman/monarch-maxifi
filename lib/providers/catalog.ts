@@ -16,6 +16,6 @@ export interface ProviderDescriptor {
 
 export const PROVIDER_CATALOG: ProviderDescriptor[] = [
   { id: 'monarch', label: 'Monarch', tagline: 'Live sync with Monarch Money', kind: 'connect', authUrl: '/api/auth/authorize' },
-  { id: 'csv', label: 'CSV Upload', tagline: 'From a Monarch transaction export', kind: 'upload' },
+  { id: 'csv', label: 'Transaction CSV', tagline: 'Point-in-time upload (Monarch export format)', kind: 'upload' },
   { id: 'ynab', label: 'YNAB', tagline: 'Live sync with a Personal Access Token', kind: 'token' },
 ];
