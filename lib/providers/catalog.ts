@@ -9,13 +9,13 @@ export interface ProviderDescriptor {
   label: string;
   tagline: string;
   // connect = redirect to an auth flow (authUrl); upload = file upload;
-  // soon = not yet available (rendered disabled).
-  kind: 'connect' | 'upload' | 'soon';
+  // token = paste a personal access token; soon = not yet available (disabled).
+  kind: 'connect' | 'upload' | 'token' | 'soon';
   authUrl?: string;
 }
 
 export const PROVIDER_CATALOG: ProviderDescriptor[] = [
   { id: 'monarch', label: 'Monarch', tagline: 'Live sync with Monarch Money', kind: 'connect', authUrl: '/api/auth/authorize' },
   { id: 'csv', label: 'CSV Upload', tagline: 'From a Monarch transaction export', kind: 'upload' },
-  { id: 'ynab', label: 'YNAB', tagline: 'Live sync — coming soon', kind: 'soon' },
+  { id: 'ynab', label: 'YNAB', tagline: 'Live sync with a Personal Access Token', kind: 'token' },
 ];

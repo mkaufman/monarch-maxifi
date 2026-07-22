@@ -89,19 +89,21 @@ export default function ReportView() {
     // a CSV user with an uploaded file needs no Monarch token.
     async function init() {
       const prov = await (await fetch('/api/provider')).json() as {
-        active: 'monarch' | 'csv';
+        active: 'monarch' | 'csv' | 'ynab';
         csvUploaded: boolean;
+        ynabConnected: boolean;
       };
+      let isReady: boolean;
       if (prov.active === 'csv') {
-        const isReady = prov.csvUploaded;
-        setReady(isReady);
-        if (isReady) fetchReport(year);
-        return;
+        isReady = prov.csvUploaded;
+      } else if (prov.active === 'ynab') {
+        isReady = prov.ynabConnected;
+      } else {
+        // Monarch: still requires a live connection.
+        isReady = ((await (await fetch('/api/auth/status')).json()) as { connected: boolean }).connected;
       }
-      // Monarch: still requires a live connection.
-      const { connected } = await (await fetch('/api/auth/status')).json() as { connected: boolean };
-      setReady(connected);
-      if (connected) fetchReport(year);
+      setReady(isReady);
+      if (isReady) fetchReport(year);
     }
     init();
     // eslint-disable-next-line react-hooks/exhaustive-deps

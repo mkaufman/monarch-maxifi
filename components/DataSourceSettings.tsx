@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { PROVIDER_CATALOG } from '@/lib/providers/catalog';
+import { PROVIDER_CATALOG, type ProviderId } from '@/lib/providers/catalog';
+import YnabConnectForm from './YnabConnectForm';
 
 interface ProviderStatus {
-  active: 'monarch' | 'csv';
+  active: ProviderId;
   csvUploaded: boolean;
+  ynabConnected: boolean;
 }
 
 export default function DataSourceSettings() {
@@ -47,7 +49,7 @@ export default function DataSourceSettings() {
     }
   }
 
-  async function switchTo(provider: 'monarch' | 'csv') {
+  async function switchTo(provider: ProviderId) {
     setBusy(true);
     setError(null);
     setMessage(null);
@@ -81,22 +83,22 @@ export default function DataSourceSettings() {
         <div className="flex flex-wrap gap-3">
           {PROVIDER_CATALOG.map((p) => {
             const isActive = active === p.id;
-            const isSoon = p.kind === 'soon';
             const needsCsv = p.id === 'csv' && !status?.csvUploaded;
-            const disabled = busy || isSoon || needsCsv;
+            const needsYnab = p.id === 'ynab' && !status?.ynabConnected;
+            const disabled = busy || needsCsv || needsYnab;
             return (
               <button
                 key={p.id}
                 type="button"
                 disabled={disabled}
-                onClick={() => !isSoon && switchTo(p.id as 'monarch' | 'csv')}
+                onClick={() => switchTo(p.id)}
                 className={`rounded-lg border px-4 py-2 text-sm ${
                   isActive
                     ? 'border-blue bg-blue/10 text-blue font-medium'
                     : 'border-border text-text-secondary hover:border-blue/50 disabled:opacity-50 disabled:hover:border-border'
                 }`}
               >
-                {isActive ? '● ' : ''}{p.label}{isSoon ? ' (soon)' : ''}
+                {isActive ? '● ' : ''}{p.label}
               </button>
             );
           })}
@@ -117,6 +119,13 @@ export default function DataSourceSettings() {
             }}
             className="block w-full text-sm text-text-secondary file:mr-4 file:rounded-lg file:border-0 file:bg-blue/10 file:px-4 file:py-2 file:text-sm file:text-blue hover:file:bg-blue/20"
           />
+        </div>
+
+        <div className="space-y-1 pt-1">
+          <label className="text-sm text-text-secondary">
+            {status?.ynabConnected ? 'Reconnect YNAB (replace token)' : 'Connect YNAB'}
+          </label>
+          <YnabConnectForm onConnected={load} />
         </div>
 
         {message && <p className="text-xs text-success">✓ {message}</p>}

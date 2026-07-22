@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { PROVIDER_CATALOG, type ProviderDescriptor } from '@/lib/providers/catalog';
+import YnabConnectForm from './YnabConnectForm';
 
 // Front-door screen shown when the active provider isn't ready. Presents every
 // data source as a peer card (Monarch connect, CSV upload, YNAB stub). Adding a
@@ -102,6 +103,7 @@ function ProviderCard({
           {busy ? 'Uploading…' : 'Choose file…'}
         </button>
       )}
+      {provider.kind === 'token' && <YnabConnectForm />}
       {provider.kind === 'soon' && (
         <span className="text-xs font-medium text-text-secondary border border-border rounded-lg px-4 py-2">
           Coming soon
