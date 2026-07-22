@@ -1,4 +1,5 @@
 import SettingsForm from '@/components/SettingsForm';
+import DataSourceSettings from '@/components/DataSourceSettings';
 
 export default function SettingsPage() {
   return (
@@ -7,7 +8,8 @@ export default function SettingsPage() {
       <p className="text-sm text-text-secondary">
         Configure MaxiFi budget targets and category forecast models.
       </p>
-      <div className="pt-4">
+      <div className="pt-4 space-y-10">
+        <DataSourceSettings />
         <SettingsForm />
       </div>
     </div>

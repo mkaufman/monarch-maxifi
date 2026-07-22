@@ -38,7 +38,8 @@ function migrate(db: Database.Database) {
     );
 
     CREATE TABLE IF NOT EXISTS category_config (
-      category_id TEXT PRIMARY KEY,
+      provider TEXT NOT NULL DEFAULT 'monarch',
+      category_id TEXT NOT NULL,
       category_name TEXT NOT NULL,
       bucket TEXT CHECK(bucket IN ('fixed', 'discretionary', 'excluded')),
       maxifi_subcategory TEXT,
@@ -47,7 +48,13 @@ function migrate(db: Database.Database) {
       forecast_override_amount REAL,
       forecast_exclude_amount REAL,
       forecast_add_amount REAL,
-      updated_at TEXT NOT NULL
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (provider, category_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS app_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS maxifi_budgets (
@@ -94,6 +101,37 @@ function migrate(db: Database.Database) {
     db.exec(`ALTER TABLE maxifi_fixed_subcategories ADD COLUMN actual_amount REAL`);
   }
 
+  // Per-provider config keying: category_config PK becomes (provider, category_id).
+  // SQLite can't alter a PK in place, so recreate + backfill existing rows to
+  // 'monarch'. Guarded on the 'provider' column so it runs once on old DBs only.
+  const catCols = db.prepare(`PRAGMA table_info(category_config)`).all() as Array<{ name: string }>;
+  if (!catCols.some((c) => c.name === 'provider')) {
+    db.exec(`
+      CREATE TABLE category_config_new (
+        provider TEXT NOT NULL DEFAULT 'monarch',
+        category_id TEXT NOT NULL,
+        category_name TEXT NOT NULL,
+        bucket TEXT CHECK(bucket IN ('fixed', 'discretionary', 'excluded')),
+        maxifi_subcategory TEXT,
+        maxifi_group TEXT,
+        forecast_model TEXT NOT NULL DEFAULT 'run_rate',
+        forecast_override_amount REAL,
+        forecast_exclude_amount REAL,
+        forecast_add_amount REAL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (provider, category_id)
+      );
+      INSERT INTO category_config_new
+        (provider, category_id, category_name, bucket, maxifi_subcategory, maxifi_group,
+         forecast_model, forecast_override_amount, forecast_exclude_amount, forecast_add_amount, updated_at)
+      SELECT 'monarch', category_id, category_name, bucket, maxifi_subcategory, maxifi_group,
+         forecast_model, forecast_override_amount, forecast_exclude_amount, forecast_add_amount, updated_at
+      FROM category_config;
+      DROP TABLE category_config;
+      ALTER TABLE category_config_new RENAME TO category_config;
+    `);
+  }
+
   // Seed household members (INSERT OR IGNORE — won't overwrite existing names)
   const now = new Date().toISOString();
   db.prepare(`INSERT OR IGNORE INTO household_members (member_key, name, updated_at) VALUES ('person1', 'Person 1', ?)`).run(now);
@@ -103,6 +141,7 @@ function migrate(db: Database.Database) {
 // ── Category config ──────────────────────────────────────────────────────────
 
 export interface CategoryConfigRow {
+  provider: string;
   category_id: string;
   category_name: string;
   bucket: Bucket | null;
@@ -115,35 +154,35 @@ export interface CategoryConfigRow {
   updated_at: string;
 }
 
-export function getAllCategoryConfigs(): CategoryConfigRow[] {
+export function getAllCategoryConfigs(provider: string): CategoryConfigRow[] {
   return getDb()
-    .prepare('SELECT * FROM category_config ORDER BY category_name')
-    .all() as CategoryConfigRow[];
+    .prepare('SELECT * FROM category_config WHERE provider = ? ORDER BY category_name')
+    .all(provider) as CategoryConfigRow[];
 }
 
-export function getCategoryConfig(categoryId: string): CategoryConfigRow | undefined {
+export function getCategoryConfig(provider: string, categoryId: string): CategoryConfigRow | undefined {
   return getDb()
-    .prepare('SELECT * FROM category_config WHERE category_id = ?')
-    .get(categoryId) as CategoryConfigRow | undefined;
+    .prepare('SELECT * FROM category_config WHERE provider = ? AND category_id = ?')
+    .get(provider, categoryId) as CategoryConfigRow | undefined;
 }
 
-export function deleteCategoryConfig(categoryId: string): void {
-  getDb().prepare('DELETE FROM category_config WHERE category_id = ?').run(categoryId);
+export function deleteCategoryConfig(provider: string, categoryId: string): void {
+  getDb().prepare('DELETE FROM category_config WHERE provider = ? AND category_id = ?').run(provider, categoryId);
 }
 
 export function upsertCategoryConfig(config: CategoryConfigRow): void {
   getDb()
     .prepare(`
       INSERT INTO category_config (
-        category_id, category_name, bucket, maxifi_subcategory, maxifi_group,
+        provider, category_id, category_name, bucket, maxifi_subcategory, maxifi_group,
         forecast_model, forecast_override_amount, forecast_exclude_amount,
         forecast_add_amount, updated_at
       ) VALUES (
-        @category_id, @category_name, @bucket, @maxifi_subcategory, @maxifi_group,
+        @provider, @category_id, @category_name, @bucket, @maxifi_subcategory, @maxifi_group,
         @forecast_model, @forecast_override_amount, @forecast_exclude_amount,
         @forecast_add_amount, @updated_at
       )
-      ON CONFLICT(category_id) DO UPDATE SET
+      ON CONFLICT(provider, category_id) DO UPDATE SET
         category_name = excluded.category_name,
         bucket = excluded.bucket,
         maxifi_subcategory = excluded.maxifi_subcategory,
@@ -155,6 +194,24 @@ export function upsertCategoryConfig(config: CategoryConfigRow): void {
         updated_at = excluded.updated_at
     `)
     .run(config);
+}
+
+// ── App settings (key/value) ─────────────────────────────────────────────────
+
+export function getAppSetting(key: string): string | undefined {
+  const row = getDb()
+    .prepare('SELECT value FROM app_settings WHERE key = ?')
+    .get(key) as { value: string } | undefined;
+  return row?.value;
+}
+
+export function setAppSetting(key: string, value: string): void {
+  getDb()
+    .prepare(`
+      INSERT INTO app_settings (key, value) VALUES (?, ?)
+      ON CONFLICT(key) DO UPDATE SET value = excluded.value
+    `)
+    .run(key, value);
 }
 
 // ── MaxiFi budgets ───────────────────────────────────────────────────────────

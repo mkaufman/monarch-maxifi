@@ -83,6 +83,21 @@ export const DEFAULT_CATEGORY_CONFIG: Record<string, DefaultCategoryConfig> = {
   'Balance Adjustments': { bucket: 'excluded', forecastModel: 'run_rate' },
   Uncategorized: { bucket: 'excluded', forecastModel: 'run_rate' },
   uncategorized: { bucket: 'excluded', forecastModel: 'run_rate' },
+
+  // Excluded — income. Monarch's live feed filters these out via category_type;
+  // a CSV export does not, so we seed the common income category names as
+  // excluded. Unrecognized income categories still surface as "unassigned" for
+  // the user to exclude once (no auto sign-heuristic — see notes/csv decision).
+  Paychecks: { bucket: 'excluded', forecastModel: 'run_rate' },
+  Paycheck: { bucket: 'excluded', forecastModel: 'run_rate' },
+  Interest: { bucket: 'excluded', forecastModel: 'run_rate' },
+  'Dividends & Capital Gains': { bucket: 'excluded', forecastModel: 'run_rate' },
+  'Business Income': { bucket: 'excluded', forecastModel: 'run_rate' },
+  'Rental Income': { bucket: 'excluded', forecastModel: 'run_rate' },
+  'Other Income': { bucket: 'excluded', forecastModel: 'run_rate' },
+  Reimbursement: { bucket: 'excluded', forecastModel: 'run_rate' },
+  'Returned Purchase': { bucket: 'excluded', forecastModel: 'run_rate' },
+  'Sale of Goods': { bucket: 'excluded', forecastModel: 'run_rate' },
 };
 
 // Infer a default forecast model from Monarch's budget_variability field

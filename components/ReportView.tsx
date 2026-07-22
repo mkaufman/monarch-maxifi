@@ -45,7 +45,7 @@ export default function ReportView() {
   const [specialExpenses, setSpecialExpenses] = useState<Array<{ id: number; year: number; name: string; amount: number }>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [connected, setConnected] = useState<boolean | null>(null);
+  const [ready, setReady] = useState<boolean | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export default function ReportView() {
         fetch(`/api/budgets?year=${yr}`),
       ]);
       if (monarchRes.status === 401) {
-        setConnected(false);
+        setReady(false);
         return;
       }
       const monarchJson = await monarchRes.json();
@@ -85,13 +85,25 @@ export default function ReportView() {
   }, []);
 
   useEffect(() => {
-    async function checkAuth() {
-      const res = await fetch('/api/auth/status');
-      const json = await res.json();
-      setConnected(json.connected as boolean);
-      if (json.connected) fetchReport(year);
+    // Gate on the *active* provider's readiness, not Monarch auth specifically:
+    // a CSV user with an uploaded file needs no Monarch token.
+    async function init() {
+      const prov = await (await fetch('/api/provider')).json() as {
+        active: 'monarch' | 'csv';
+        csvUploaded: boolean;
+      };
+      if (prov.active === 'csv') {
+        const isReady = prov.csvUploaded;
+        setReady(isReady);
+        if (isReady) fetchReport(year);
+        return;
+      }
+      // Monarch: still requires a live connection.
+      const { connected } = await (await fetch('/api/auth/status')).json() as { connected: boolean };
+      setReady(connected);
+      if (connected) fetchReport(year);
     }
-    checkAuth();
+    init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -100,7 +112,7 @@ export default function ReportView() {
     fetchReport(yr);
   };
 
-  if (connected === null) {
+  if (ready === null) {
     return (
       <div className="flex items-center justify-center py-24">
         <div className="text-text-secondary text-sm">Loading…</div>
@@ -108,7 +120,7 @@ export default function ReportView() {
     );
   }
 
-  if (connected === false) {
+  if (ready === false) {
     return <ConnectPrompt error={authError} />;
   }
 

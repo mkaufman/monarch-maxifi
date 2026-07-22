@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchMonarchData } from '@/lib/monarch';
+import { getActiveProvider } from '@/lib/providers';
 import { getAllCategoryConfigs, upsertCategoryConfig, deleteCategoryConfig, getMaxiFiBudgets, getMaxiFiSubcategories, getSpecialExpenses, getHouseholdMembers } from '@/lib/db';
 import { DEFAULT_CATEGORY_CONFIG, defaultModelFromVariability } from '@/lib/categories';
 import { computeForecast, computeFlags, MODEL_LABELS } from '@/lib/forecast';
@@ -32,38 +32,34 @@ export async function GET(request: NextRequest) {
       : 365;
 
   try {
-    const { categories: categoriesResult, ytd: ytdResult, prior: priorResult } =
-      await fetchMonarchData(startOfYear, endDate, priorStart, priorEnd);
+    const provider = getActiveProvider();
+    const { groups, ytdByCategory, priorByCategory } = await provider.fetch({
+      ytdStart: startOfYear,
+      ytdEnd: endDate,
+      priorStart,
+      priorEnd,
+    });
 
-    // Build lookup: category ID → YTD amount (positive)
-    const ytdByCategory: Record<string, number> = {};
-    for (const row of ytdResult.data) {
-      ytdByCategory[row.entity_id] = Math.abs(row.amount);
-    }
-    const priorByCategory: Record<string, number> = {};
-    for (const row of priorResult.data) {
-      priorByCategory[row.entity_id] = Math.abs(row.amount);
-    }
-
-    // Sync DB category config with current Monarch categories
-    const existingConfigs = getAllCategoryConfigs();
+    // Sync DB category config with the active provider's categories
+    const existingConfigs = getAllCategoryConfigs(provider.id);
     const existingIds = new Set(existingConfigs.map((c) => c.category_id));
     const now = new Date().toISOString();
 
     const monarchExpenseIds = new Set<string>();
-    for (const group of categoriesResult.category_groups) {
+    for (const group of groups) {
       if (group.type !== 'expense') continue;
       for (const cat of group.categories) {
         monarchExpenseIds.add(cat.id);
         if (existingIds.has(cat.id)) continue;
         const defaults = DEFAULT_CATEGORY_CONFIG[cat.name];
         upsertCategoryConfig({
+          provider: provider.id,
           category_id: cat.id,
           category_name: cat.name,
           bucket: defaults?.bucket ?? null,
           maxifi_subcategory: defaults?.maxifiSubcategory ?? null,
           maxifi_group: defaults?.maxifiGroup ?? null,
-          forecast_model: defaults?.forecastModel ?? defaultModelFromVariability(cat.budget_variability),
+          forecast_model: defaults?.forecastModel ?? defaultModelFromVariability(cat.variability),
           forecast_override_amount: null,
           forecast_exclude_amount: null,
           forecast_add_amount: null,
@@ -72,14 +68,14 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Remove DB rows for categories deleted from Monarch
+    // Remove DB rows for categories no longer present in the provider's data
     for (const config of existingConfigs) {
       if (!monarchExpenseIds.has(config.category_id)) {
-        deleteCategoryConfig(config.category_id);
+        deleteCategoryConfig(provider.id, config.category_id);
       }
     }
 
-    const allConfigs = getAllCategoryConfigs();
+    const allConfigs = getAllCategoryConfigs(provider.id);
     const configById = Object.fromEntries(allConfigs.map((c) => [c.category_id, c]));
 
     // Get MaxiFi budgets for the year
@@ -104,7 +100,7 @@ export async function GET(request: NextRequest) {
       flags: ReturnType<typeof computeFlags>;
       config: ReturnType<typeof getAllCategoryConfigs>[number];
     }> = [];
-    for (const group of categoriesResult.category_groups) {
+    for (const group of groups) {
       if (group.type !== 'expense') continue;
       for (const cat of group.categories) {
         const config = configById[cat.id];
@@ -147,7 +143,7 @@ export async function GET(request: NextRequest) {
 
     // Surface uncategorized/unassigned categories
     const unassigned = [];
-    for (const group of categoriesResult.category_groups) {
+    for (const group of groups) {
       if (group.type !== 'expense') continue;
       for (const cat of group.categories) {
         const config = configById[cat.id];
