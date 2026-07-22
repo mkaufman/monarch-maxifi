@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 
 const LS_KEY = 'monarch-maxifi:fixed-breakdown-expanded';
 
@@ -91,18 +91,18 @@ export default function BucketSummary({ label, ytdTotal, annualForecast, budget,
           </button>
 
           {expanded && (
-            <div className="mt-2 space-y-1">
-              <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 pb-1">
-                <span className="text-xs text-text-secondary"></span>
-                <span className="text-xs text-text-secondary text-right">Forecast</span>
-                <span className="text-xs text-text-secondary text-right">Budget</span>
-                <span className="text-xs text-text-secondary text-right">±</span>
-              </div>
+            // One shared grid for header + all rows so the numeric columns line
+            // up (per-row grids sized their `auto` tracks independently).
+            <div className="mt-2 grid grid-cols-[1fr_auto_auto_auto] gap-x-4 gap-y-1 items-baseline">
+              <span className="text-xs text-text-secondary"></span>
+              <span className="text-xs text-text-secondary text-right pb-1">Forecast</span>
+              <span className="text-xs text-text-secondary text-right pb-1">Budget</span>
+              <span className="text-xs text-text-secondary text-right pb-1">±</span>
               {subcategoryBreakdown!.map((item) => {
                 const v = item.budget !== null ? item.forecast - item.budget : null;
                 const over = v !== null && v > 0;
                 return (
-                  <div key={item.key} className="grid grid-cols-[1fr_auto_auto_auto] gap-x-4 items-baseline">
+                  <Fragment key={item.key}>
                     <span className="text-sm text-text-secondary truncate">{item.label}</span>
                     <span className="text-sm tabular-nums text-text-primary text-right">{fmt(item.forecast)}</span>
                     <span className="text-sm tabular-nums text-text-secondary text-right">
@@ -113,7 +113,7 @@ export default function BucketSummary({ label, ytdTotal, annualForecast, budget,
                     }`}>
                       {v !== null ? (over ? '+' : '') + fmt(v) : '—'}
                     </span>
-                  </div>
+                  </Fragment>
                 );
               })}
             </div>
