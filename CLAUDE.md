@@ -1,5 +1,18 @@
 # monarch-maxifi — CLAUDE.md
 
+## Repository & privacy — READ FIRST
+
+**This GitHub repo is PUBLIC.** Never commit the user's personal or financial data.
+Real data lives only in the gitignored SQLite DB (`/data/`) and transaction exports
+(`Transactions_*.csv`) — keep it there.
+
+- **Gitignored / private:** `/data/`, `/notes/`, `Transactions_*.csv`, `.env*`.
+- **NOT ignored (PUBLIC if committed):** `/docs/`, `Context/`, `Spec/`, source code, this file.
+- Put any planning/handoff/analysis doc that contains real amounts, household names,
+  account details, or tokens in **`/notes/`**, never `/docs/`.
+- Never hardcode personal financial data, names, or secrets into tracked source.
+- Before any `git push`, scan the diff for names/amounts/tokens.
+
 ## What this app does
 
 Local Next.js app bridging Monarch Money actuals with MaxiFi annual budget targets.
